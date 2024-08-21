@@ -17,8 +17,14 @@ static void panic(const char *message) {
   exit(EXIT_FAILURE);
 }
 
-void draw(cairo_t *cairo, cairo_surface_t *image) {
-  cairo_set_source_surface(cairo, image, 0, 0);
+typedef struct {
+  cairo_surface_t *surface;
+  int width;
+  int height;
+} image;
+
+void draw(cairo_t *cairo, image *image) {
+  cairo_set_source_surface(cairo, image->surface, 0, 0);
   cairo_paint(cairo);
 }
 
@@ -42,7 +48,11 @@ int main() {
                         &visual)) {
     panic("No visual found supporting 32 bit color, terminating");
   }
-  cairo_surface_t *image = cairo_image_surface_create_from_png("dvd.png");
+  image image = {
+      .surface = cairo_image_surface_create_from_png("dvd.png"),
+  };
+  image.width = cairo_xlib_surface_get_width(image.surface);
+  image.height = cairo_xlib_surface_get_height(image.surface);
   XSetWindowAttributes attrs = {
       .override_redirect = true,
       .colormap = XCreateColormap(display, root, visual.visual, AllocNone),
@@ -59,12 +69,12 @@ int main() {
       display, window, visual.visual, attributes.width, attributes.height);
   cairo_t *cairo = cairo_create(surface);
   while (true) {
-    draw(cairo, image);
+    draw(cairo, &image);
     XFlush(display);
     usleep(FRAME_TIME_US);
   }
 
-  cairo_surface_destroy(image);
+  cairo_surface_destroy(image.surface);
   cairo_destroy(cairo);
   cairo_surface_destroy(surface);
 
