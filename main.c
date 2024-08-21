@@ -8,6 +8,10 @@
 
 #define WIDTH 600
 #define HEIGHT 600
+#define FPS 30.0
+
+#define FRAME_TIME 1.0 / FPS
+#define FRAME_TIME_US FRAME_TIME * 1e+6
 
 static void panic(const char *message) {
   fprintf(stderr, "%s\n", message);
@@ -28,15 +32,7 @@ void draw(cairo_t *cairo) {
   cairo_surface_destroy(image);
 }
 
-int error_handler(Display *display, XErrorEvent *event) {
-  (void)display;
-  (void)event;
-  puts("error_handler");
-  return 0;
-}
-
 int main() {
-  XSetErrorHandler(error_handler);
   Display *display = XOpenDisplay(NULL);
   if (display == NULL) {
     panic("Could not open display");
@@ -59,19 +55,17 @@ int main() {
 
   XMapWindow(display, window);
 
-  cairo_surface_t *surf =
+  cairo_surface_t *surface =
       cairo_xlib_surface_create(display, window, visual.visual, WIDTH, HEIGHT);
-  cairo_t *cr = cairo_create(surf);
-
-  for (int i = 0; i < 10; i++) {
-    draw(cr);
+  cairo_t *cairo = cairo_create(surface);
+  while (true) {
+    draw(cairo);
     XFlush(display);
-
-    sleep(1);
+    usleep(FRAME_TIME_US);
   }
 
-  cairo_destroy(cr);
-  cairo_surface_destroy(surf);
+  cairo_destroy(cairo);
+  cairo_surface_destroy(surface);
 
   XUnmapWindow(display, window);
   XCloseDisplay(display);
