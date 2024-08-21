@@ -18,18 +18,9 @@ static void panic(const char *message) {
   exit(EXIT_FAILURE);
 }
 
-void draw(cairo_t *cairo) {
-  cairo_surface_t *image = cairo_image_surface_create_from_png("dvd.png");
-  if (image == NULL) {
-    abort();
-  }
-  int w = cairo_image_surface_get_width(image);
-  int h = cairo_image_surface_get_height(image);
-
+void draw(cairo_t *cairo, cairo_surface_t *image) {
   cairo_set_source_surface(cairo, image, 0, 0);
-  printf("%dx%d\n", w, h);
   cairo_paint(cairo);
-  cairo_surface_destroy(image);
 }
 
 int main() {
@@ -58,12 +49,14 @@ int main() {
   cairo_surface_t *surface =
       cairo_xlib_surface_create(display, window, visual.visual, WIDTH, HEIGHT);
   cairo_t *cairo = cairo_create(surface);
+  cairo_surface_t *image = cairo_image_surface_create_from_png("dvd.png");
   while (true) {
-    draw(cairo);
+    draw(cairo, image);
     XFlush(display);
     usleep(FRAME_TIME_US);
   }
 
+  cairo_surface_destroy(image);
   cairo_destroy(cairo);
   cairo_surface_destroy(surface);
 
