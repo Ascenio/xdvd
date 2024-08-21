@@ -8,10 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define WIDTH 600
-#define HEIGHT 600
 #define FPS 30.0
-
 #define FRAME_TIME 1.0 / FPS
 #define FRAME_TIME_US FRAME_TIME * 1e+6
 
@@ -38,28 +35,29 @@ int main() {
     panic("Could not open display");
   }
   Window root = DefaultRootWindow(display);
+  XWindowAttributes attributes;
+  XGetWindowAttributes(display, root, &attributes);
   XVisualInfo visual;
   if (!XMatchVisualInfo(display, DefaultScreen(display), 32, TrueColor,
                         &visual)) {
     panic("No visual found supporting 32 bit color, terminating");
   }
+  cairo_surface_t *image = cairo_image_surface_create_from_png("dvd.png");
   XSetWindowAttributes attrs = {
       .override_redirect = true,
       .colormap = XCreateColormap(display, root, visual.visual, AllocNone),
   };
-
   Window window = XCreateWindow(
-      display, root, 0, 0, WIDTH, HEIGHT, 0, visual.depth, InputOutput,
-      visual.visual,
+      display, root, 0, 0, attributes.width, attributes.height, 0, visual.depth,
+      InputOutput, visual.visual,
       CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, &attrs);
 
   ignore_mouse_input(display, window);
   XMapWindow(display, window);
 
-  cairo_surface_t *surface =
-      cairo_xlib_surface_create(display, window, visual.visual, WIDTH, HEIGHT);
+  cairo_surface_t *surface = cairo_xlib_surface_create(
+      display, window, visual.visual, attributes.width, attributes.height);
   cairo_t *cairo = cairo_create(surface);
-  cairo_surface_t *image = cairo_image_surface_create_from_png("dvd.png");
   while (true) {
     draw(cairo, image);
     XFlush(display);
