@@ -1,4 +1,6 @@
 #include <X11/Xutil.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/shape.h>
 #include <cairo/cairo-xlib.h>
 #include <cairo/cairo.h>
 #include <stdbool.h>
@@ -23,6 +25,13 @@ void draw(cairo_t *cairo, cairo_surface_t *image) {
   cairo_paint(cairo);
 }
 
+static void ignore_mouse_input(Display *display, Window window) {
+  XRectangle rect;
+  XserverRegion region = XFixesCreateRegion(display, &rect, 1);
+  XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
+  XFixesDestroyRegion(display, region);
+}
+
 int main() {
   Display *display = XOpenDisplay(NULL);
   if (display == NULL) {
@@ -44,6 +53,7 @@ int main() {
       visual.visual,
       CWOverrideRedirect | CWColormap | CWBackPixel | CWBorderPixel, &attrs);
 
+  ignore_mouse_input(display, window);
   XMapWindow(display, window);
 
   cairo_surface_t *surface =
