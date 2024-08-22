@@ -23,8 +23,31 @@ typedef struct {
   int height;
 } image;
 
-void draw(cairo_t *cairo, image *image) {
-  cairo_set_source_surface(cairo, image->surface, 0, 0);
+// TODO: introduce state struct
+// TODO: initialize with the logo in random position
+
+int x = 0;
+int y = 0;
+int dx = 7;
+int dy = 7;
+
+void draw(cairo_t *cairo, image *image, int screen_width, int screen_height) {
+  cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
+  cairo_paint(cairo);
+  int new_x = x + dx;
+  int new_y = y + dy;
+  if (new_x < 0 || (new_x + image->width) > screen_width) {
+    dx *= -1;
+  } else {
+    x = new_x;
+  }
+  if (new_y < 0 || new_y + image->height > screen_height) {
+    dy *= -1;
+  } else {
+    y = new_y;
+  }
+  cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
+  cairo_set_source_surface(cairo, image->surface, x, y);
   cairo_paint(cairo);
 }
 
@@ -51,8 +74,8 @@ int main() {
   image image = {
       .surface = cairo_image_surface_create_from_png("dvd.png"),
   };
-  image.width = cairo_xlib_surface_get_width(image.surface);
-  image.height = cairo_xlib_surface_get_height(image.surface);
+  image.width = cairo_image_surface_get_width(image.surface);
+  image.height = cairo_image_surface_get_height(image.surface);
   XSetWindowAttributes attrs = {
       .override_redirect = true,
       .colormap = XCreateColormap(display, root, visual.visual, AllocNone),
@@ -69,7 +92,7 @@ int main() {
       display, window, visual.visual, attributes.width, attributes.height);
   cairo_t *cairo = cairo_create(surface);
   while (true) {
-    draw(cairo, &image);
+    draw(cairo, &image, attributes.width, attributes.height);
     XFlush(display);
     usleep(FRAME_TIME_US);
   }
