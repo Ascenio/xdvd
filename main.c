@@ -34,21 +34,27 @@ typedef struct {
 
 // TODO: initialize with the logo in random position
 
+static bool x_is_within_screen_bounds(int x, int width, int screen_width) {
+  return 0 <= x && (x + width) <= screen_width;
+}
+
+static bool y_is_within_screen_bounds(int y, int height, int screen_height) {
+  return 0 <= y && y + height <= screen_height;
+}
+
 void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
           int screen_height) {
-  cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
-  cairo_paint(cairo);
   int new_x = state->x + state->dx;
   int new_y = state->y + state->dy;
-  if (new_x < 0 || (new_x + image->width) > screen_width) {
-    state->dx *= -1;
-  } else {
+  if (x_is_within_screen_bounds(new_x, image->width, screen_width)) {
     state->x = new_x;
-  }
-  if (new_y < 0 || new_y + image->height > screen_height) {
-    state->dy *= -1;
   } else {
+    state->dx *= -1;
+  }
+  if (y_is_within_screen_bounds(new_y, image->height, screen_height)) {
     state->y = new_y;
+  } else {
+    state->dy *= -1;
   }
   cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
   cairo_set_source_surface(cairo, image->surface, state->x, state->y);
