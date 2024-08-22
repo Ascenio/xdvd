@@ -1,8 +1,6 @@
-#include <X11/Xutil.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/shape.h>
 #include <cairo/cairo-xlib.h>
-#include <cairo/cairo.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
