@@ -23,7 +23,7 @@ typedef struct {
   cairo_surface_t *surface;
   int width;
   int height;
-} image;
+} Image;
 
 typedef struct {
   int x;
@@ -34,7 +34,7 @@ typedef struct {
 
 // TODO: initialize with the logo in random position
 
-void draw(cairo_t *cairo, State *state, image *image, int screen_width,
+void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
           int screen_height) {
   cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
   cairo_paint(cairo);
@@ -75,7 +75,7 @@ int main() {
                         &visual)) {
     panic("No visual found supporting 32 bit color, terminating");
   }
-  image image = {
+  Image image = {
       .surface = cairo_image_surface_create_from_png("dvd.png"),
   };
   image.width = cairo_image_surface_get_width(image.surface);
