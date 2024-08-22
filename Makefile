@@ -1,4 +1,4 @@
-CFLAGS=-Wall -Werror -Wextra -Wpedantic -ggdb
+CFLAGS=-Wall -Werror -Wextra -Wpedantic -ggdb -O3
 LIBS=-lX11 -lcairo -lXfixes
 
 all:
