@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #define DX 7
@@ -31,8 +32,6 @@ typedef struct {
   int dx;
   int dy;
 } State;
-
-// TODO: initialize with the logo in random position
 
 static bool x_is_within_screen_bounds(int x, int width, int screen_width) {
   return 0 <= x && (x + width) <= screen_width;
@@ -68,7 +67,26 @@ static void ignore_mouse_input(Display *display, Window window) {
   XFixesDestroyRegion(display, region);
 }
 
+static int rand_int(int max) { return max * (rand() / (double)RAND_MAX); }
+
+static State rand_state(Image *image, int screen_width, int screen_height) {
+  while (true) {
+    int x = rand_int(screen_width);
+    int y = rand_int(screen_height);
+    if (x_is_within_screen_bounds(x, image->width, screen_width) &&
+        y_is_within_screen_bounds(y, image->height, screen_height)) {
+      return (State){
+          .x = x,
+          .y = y,
+          .dx = DX,
+          .dy = DY,
+      };
+    }
+  }
+}
+
 int main() {
+  srand(time(NULL));
   Display *display = XOpenDisplay(NULL);
   if (display == NULL) {
     panic("Could not open display");
@@ -101,12 +119,7 @@ int main() {
   cairo_surface_t *surface = cairo_xlib_surface_create(
       display, window, visual.visual, attributes.width, attributes.height);
   cairo_t *cairo = cairo_create(surface);
-  State state = {
-      .x = 0,
-      .y = 0,
-      .dx = DX,
-      .dy = DY,
-  };
+  State state = rand_state(&image, attributes.width, attributes.height);
 
   while (true) {
     draw(cairo, &state, &image, attributes.width, attributes.height);
