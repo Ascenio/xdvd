@@ -25,10 +25,15 @@ typedef struct {
 } Image;
 
 typedef struct {
+  double r, g, b, a;
+} Color;
+
+typedef struct {
   int x;
   int y;
   int dx;
   int dy;
+  Color color;
 } State;
 
 static bool x_is_within_screen_bounds(int x, int width, int screen_width) {
@@ -39,25 +44,6 @@ static bool y_is_within_screen_bounds(int y, int height, int screen_height) {
   return 0 <= y && y + height <= screen_height;
 }
 
-void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
-          int screen_height) {
-  int new_x = state->x + state->dx;
-  int new_y = state->y + state->dy;
-  if (x_is_within_screen_bounds(new_x, image->width, screen_width)) {
-    state->x = new_x;
-  } else {
-    state->dx *= -1;
-  }
-  if (y_is_within_screen_bounds(new_y, image->height, screen_height)) {
-    state->y = new_y;
-  } else {
-    state->dy *= -1;
-  }
-  cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-  cairo_set_source_surface(cairo, image->surface, state->x, state->y);
-  cairo_paint(cairo);
-}
-
 static void ignore_mouse_input(Display *display, Window window) {
   XRectangle rect;
   XserverRegion region = XFixesCreateRegion(display, &rect, 1);
@@ -65,7 +51,9 @@ static void ignore_mouse_input(Display *display, Window window) {
   XFixesDestroyRegion(display, region);
 }
 
-static int rand_int(int max) { return max * (rand() / (double)RAND_MAX); }
+static double rand_double() { return rand() / (double)RAND_MAX; }
+
+static int rand_int(int max) { return max * rand_double(); }
 
 static State rand_state(Image *image, int screen_width, int screen_height) {
   while (true) {
@@ -78,9 +66,49 @@ static State rand_state(Image *image, int screen_width, int screen_height) {
           .y = y,
           .dx = DX,
           .dy = DY,
+          .color =
+              {
+                  .r = 1.0,
+                  .g = 1.0,
+                  .b = 1.0,
+                  .a = 1.0,
+              },
       };
     }
   }
+}
+
+static void set_random_color_as_source(State *state) {
+  state->color = (Color){
+      .r = rand_double(),
+      .g = rand_double(),
+      .b = rand_double(),
+      .a = state->color.a,
+  };
+}
+
+void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
+          int screen_height) {
+  int new_x = state->x + state->dx;
+  int new_y = state->y + state->dy;
+  if (x_is_within_screen_bounds(new_x, image->width, screen_width)) {
+    state->x = new_x;
+  } else {
+    set_random_color_as_source(state);
+    state->dx *= -1;
+  }
+  if (y_is_within_screen_bounds(new_y, image->height, screen_height)) {
+    state->y = new_y;
+  } else {
+    set_random_color_as_source(state);
+    state->dy *= -1;
+  }
+  cairo_set_source_rgba(cairo, state->color.r, state->color.g, state->color.b,
+                        state->color.a);
+  cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
+  cairo_paint(cairo);
+  cairo_set_operator(cairo, CAIRO_OPERATOR_OVER);
+  cairo_mask_surface(cairo, image->surface, state->x, state->y);
 }
 
 int main() {
