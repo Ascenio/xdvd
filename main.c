@@ -10,6 +10,8 @@
 #define DX 7
 #define DY DX
 #define FPS 30.0
+#define FADE_IN_ALPHA_TIME 1
+#define FADE_IN_ALPHA_DIFF_PER_FRAME 1 / (FADE_IN_ALPHA_TIME * FPS)
 #define FRAME_TIME 1.0 / FPS
 #define FRAME_TIME_US FRAME_TIME * 1e+6
 
@@ -71,7 +73,7 @@ static State rand_state(Image *image, int screen_width, int screen_height) {
                   .r = 1.0,
                   .g = 1.0,
                   .b = 1.0,
-                  .a = 1.0,
+                  .a = 0,
               },
       };
     }
@@ -89,6 +91,11 @@ static void set_random_color_as_source(State *state) {
 
 void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
           int screen_height) {
+  state->color.a += FADE_IN_ALPHA_DIFF_PER_FRAME;
+  if (state->color.a > 1) {
+    state->color.a = 1;
+  }
+
   int new_x = state->x + state->dx;
   int new_y = state->y + state->dy;
   if (x_is_within_screen_bounds(new_x, image->width, screen_width)) {
