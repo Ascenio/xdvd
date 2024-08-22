@@ -2,4 +2,4 @@
 
 A nostalgic bouncing DVD logo for X11.
 
-https://github.com/user-attachments/assets/70f6f2b8-7a54-42d4-91c0-4b870a1a8be7
+https://github.com/user-attachments/assets/cb4890cb-e10e-4b28-99b5-0ca1e23689f2
