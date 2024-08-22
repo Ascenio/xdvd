@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define DX 7
+#define DY DX
 #define FPS 30.0
 #define FRAME_TIME 1.0 / FPS
 #define FRAME_TIME_US FRAME_TIME * 1e+6
@@ -23,31 +25,33 @@ typedef struct {
   int height;
 } image;
 
-// TODO: introduce state struct
+typedef struct {
+  int x;
+  int y;
+  int dx;
+  int dy;
+} State;
+
 // TODO: initialize with the logo in random position
 
-int x = 0;
-int y = 0;
-int dx = 7;
-int dy = 7;
-
-void draw(cairo_t *cairo, image *image, int screen_width, int screen_height) {
+void draw(cairo_t *cairo, State *state, image *image, int screen_width,
+          int screen_height) {
   cairo_set_operator(cairo, CAIRO_OPERATOR_CLEAR);
   cairo_paint(cairo);
-  int new_x = x + dx;
-  int new_y = y + dy;
+  int new_x = state->x + state->dx;
+  int new_y = state->y + state->dy;
   if (new_x < 0 || (new_x + image->width) > screen_width) {
-    dx *= -1;
+    state->dx *= -1;
   } else {
-    x = new_x;
+    state->x = new_x;
   }
   if (new_y < 0 || new_y + image->height > screen_height) {
-    dy *= -1;
+    state->dy *= -1;
   } else {
-    y = new_y;
+    state->y = new_y;
   }
   cairo_set_operator(cairo, CAIRO_OPERATOR_SOURCE);
-  cairo_set_source_surface(cairo, image->surface, x, y);
+  cairo_set_source_surface(cairo, image->surface, state->x, state->y);
   cairo_paint(cairo);
 }
 
@@ -91,8 +95,15 @@ int main() {
   cairo_surface_t *surface = cairo_xlib_surface_create(
       display, window, visual.visual, attributes.width, attributes.height);
   cairo_t *cairo = cairo_create(surface);
+  State state = {
+      .x = 0,
+      .y = 0,
+      .dx = DX,
+      .dy = DY,
+  };
+
   while (true) {
-    draw(cairo, &image, attributes.width, attributes.height);
+    draw(cairo, &state, &image, attributes.width, attributes.height);
     XFlush(display);
     usleep(FRAME_TIME_US);
   }
