@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #define DX 7
 #define DY DX
@@ -14,6 +15,14 @@
 #define FADE_IN_ALPHA_DIFF_PER_FRAME 1 / (FADE_IN_ALPHA_TIME * FPS)
 #define FRAME_TIME 1.0 / FPS
 #define FRAME_TIME_US FRAME_TIME * 1e+6
+
+static volatile sig_atomic_t quit = 0;
+
+void signal_handler(int signal) {
+  if (signal == SIGINT) {
+    quit = true;
+  }
+}
 
 static void panic(const char *message) {
   fprintf(stderr, "%s\n", message);
@@ -119,6 +128,7 @@ void draw(cairo_t *cairo, State *state, Image *image, int screen_width,
 }
 
 int main() {
+  signal(SIGINT, signal_handler);
   srand(time(NULL));
   Display *display = XOpenDisplay(NULL);
   if (display == NULL) {
@@ -154,7 +164,7 @@ int main() {
   cairo_t *cairo = cairo_create(surface);
   State state = rand_state(&image, attributes.width, attributes.height);
 
-  while (true) {
+  while (!quit) {
     draw(cairo, &state, &image, attributes.width, attributes.height);
     XFlush(display);
     usleep(FRAME_TIME_US);
